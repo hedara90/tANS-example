@@ -25,7 +25,7 @@ std::vector<DecodeCol> createDecodingTable(std::vector<char> symbols, std::vecto
         currCol.y = yValueCounting[currentSymbolIndex];
         //  Calculate the k-value, where k is how many times y needs to be doubled
         //  to be larger or equal to the total frequency count
-        int k = 1;
+        int k = 0;
         int yDoubledk = currCol.y << k;
         while (yDoubledk < totalFreq)
         {
