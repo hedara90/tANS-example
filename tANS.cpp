@@ -190,3 +190,137 @@ std::string decodeString(EncodedData *data, std::vector<DecodeCol> decodeTable, 
     }
     return decodedString;
 }
+
+std::vector<char> findSymbols(std::string input)
+{
+    std::vector<char> symbols;
+    for (int i = 0; i < input.size(); i++)
+    {
+        bool foundSym = false;
+        for (char symbol : symbols)
+        {
+            if (symbol == input[i])
+            {
+                foundSym = true;
+                break;
+            }
+        }
+        if (!foundSym)
+            symbols.push_back(input[i]);
+    }
+    return symbols;
+}
+
+std::vector<int> countSymbols(std::string input, std::vector<char> symbols)
+{
+    std::vector<int> symbolCounts(symbols.size());
+    for (int i = 0; i < input.size(); i++)
+    {
+        char currChar = input[i];
+        for (int j = 0; j < symbols.size(); j++)
+        {
+            if (currChar == symbols[j])
+            {
+                symbolCounts[j]++;
+                break;
+            }
+        }
+    }
+    return symbolCounts;
+}
+
+std::vector<int> normalizeCounts(std::vector<int> counts, int tableSize)
+{
+    int totalCount = 0;
+    for (int count : counts)
+    {
+        totalCount += count;
+    }
+    bool shouldContinue = true;
+    std::vector<int> normCounts(counts.size());
+    while (shouldContinue)
+    {
+        int smallestCount;
+        int smallestIndex;
+        int firstIndex;
+        int largestCount = 0;
+        for (int i = 0; i < counts.size(); i++)
+        {
+            if (counts[i] != 0)
+            {
+                firstIndex = i;
+                smallestIndex = i;
+                smallestCount = counts[i];
+                break;
+            }
+        }
+        for (int i = firstIndex; i < counts.size(); i++)
+        {
+            if (counts[i] < smallestCount && counts[i] != 0)
+            {
+                smallestCount = counts[i];
+                smallestIndex = i;
+            }
+            if (counts[i] > largestCount)
+            {
+                largestCount = counts[i];
+            }
+        }
+        if (largestCount == 0)
+        {
+            shouldContinue = false;
+        }
+        else
+        {
+            float frac = float(smallestCount)/float(totalCount);
+            int newCount = std::round(frac*float(tableSize));
+            if (newCount == 0 and counts[smallestIndex] != 0)
+            {
+                newCount = 1;
+            }
+            normCounts[smallestIndex] = newCount;
+            tableSize -= newCount;
+            counts[smallestIndex] = 0;
+        }
+    }
+    return normCounts;
+}
+
+void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<char> symbols)
+{
+    printf("x: ");
+    for (int i = 0; i < encodeTable.size(); i++)
+    {
+        printf("%2zu ", i+encodeTable.size());
+    }
+    printf("\n");
+    for (int i = 0; i < symbols.size(); i++)
+    {
+        printf("s: ");
+        for (int k = 0; k < encodeTable.size(); k++)
+        {
+            printf("%2i ", encodeTable[k].symbols[i].nextState);
+        }
+        printf("\n");
+        printf("b: ");
+        for (int k = 0; k < encodeTable.size(); k++)
+        {
+            printf("%2i ", encodeTable[k].symbols[i].streamValue);
+        }
+        printf("\n");
+        printf("k: ");
+        for (int k = 0; k < encodeTable.size(); k++)
+        {
+            printf("%2i ", encodeTable[k].symbols[i].numBits);
+        }
+        printf("\n");
+    }
+}
+
+void printDecodeTable(std::vector<DecodeCol> decodeTable)
+{
+    for (DecodeCol currCol : decodeTable)
+    {
+        std::cout << "State: " << currCol.state << " ->Symbol: " << currCol.symbol << " ->y, k " << currCol.y << "," << currCol.k << "\n";
+    }
+}

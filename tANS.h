@@ -43,3 +43,10 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
 
 EncodedData encodeString(std::string input, std::vector<EncodeCol> encodingTable);
 std::string decodeString(EncodedData *data, std::vector<DecodeCol> decodeTable, int numChars);
+
+std::vector<char> findSymbols(std::string input);
+std::vector<int> countSymbols(std::string input, std::vector<char> symbols);
+std::vector<int> normalizeCounts(std::vector<int> counts, int tableSize);
+
+void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<char> symbols);
+void printDecodeTable(std::vector<DecodeCol> decodeTable);
