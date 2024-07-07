@@ -92,8 +92,16 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
             currSymbol.streamValue = 0;
             currSymbol.numBits = encodeHelpers[helperNum].kVals[i];
             currSymbol.nextState = encodeHelpers[helperNum].states[i];
-            encodeTable[encodeHelpers[helperNum].yPrimVals[i]-encodeTable.size()].symbols.push_back(currSymbol);
+            int currIndex = encodeHelpers[helperNum].yPrimVals[i]-encodeTable.size();
+            encodeTable[currIndex].symbols.push_back(currSymbol);
+            int limit = std::pow(2, currSymbol.numBits);
+            for (int j = 1; j < limit; j++)
+            {
+                currSymbol.streamValue++;
+                encodeTable[currIndex + j].symbols.push_back(currSymbol);
+            }
         }
+        /*
         EncodeSymbolData currSymbol;
         int prevSize = 0;
         for (int i = 0; i < encodeTable.size(); i++)
@@ -115,6 +123,7 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
                 encodeTable[i].symbols.push_back(currSymbol);
             }
         }
+        */
     }
 
     return encodeTable;
@@ -293,7 +302,7 @@ void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<int> symbo
     printf("   x: ");
     for (int i = 0; i < encodeTable.size(); i++)
     {
-        printf("%2zu ", i+encodeTable.size());
+        printf("%3zu ", i+encodeTable.size());
     }
     printf("\n");
     for (int i = 0; i < symbols.size(); i++)
@@ -301,19 +310,19 @@ void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<int> symbo
         printf("%2i s: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
-            printf("%2i ", encodeTable[k].symbols[i].nextState);
+            printf("%3i ", encodeTable[k].symbols[i].nextState);
         }
         printf("\n");
         printf("%2i b: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
-            printf("%2i ", encodeTable[k].symbols[i].streamValue);
+            printf("%3i ", encodeTable[k].symbols[i].streamValue);
         }
         printf("\n");
         printf("%2i k: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
-            printf("%2i ", encodeTable[k].symbols[i].numBits);
+            printf("%3i ", encodeTable[k].symbols[i].numBits);
         }
         printf("\n");
     }

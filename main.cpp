@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     printSymbols(symbols);
     printCounts(counts);
 
-    counts = normalizeCounts(counts, 32);
+    counts = normalizeCounts(counts, 64);
     printf("Symbols and their normalized counts\n");
     printSymbols(symbols);
     printCounts(counts);
@@ -45,6 +45,9 @@ int main(int argc, char *argv[])
         printf("Input and output doesn't match\n");
     else
         printf("Input and output matches\n");
+
+    //printEncodeTable(encodeTable, symbols);
+    //printDecodeTable(decodeTable);
 
     return 0;
 }
