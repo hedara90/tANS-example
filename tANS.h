@@ -1,18 +1,20 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <cmath>
+#include <sstream>
 
 struct DecodeCol {
     int state;
-    char symbol;
+    int symbol;
     int y;
     int k;
 };
 
 struct EncodeHelper {
-    char symbol;
+    int symbol;
     std::vector<int> states;
     std::vector<int> yVals;
     std::vector<int> kVals;
@@ -22,7 +24,7 @@ struct EncodeHelper {
 };
 
 struct EncodeSymbolData {
-    char symbol;
+    int symbol;
     int nextState;
     int streamValue;
     int numBits;
@@ -37,16 +39,22 @@ struct EncodedData {
     std::vector<bool> bitStream;
 };
 
-std::vector<DecodeCol> createDecodingTable(std::vector<char> symbols, std::vector<int> frequencies);
+std::vector<DecodeCol> createDecodingTable(std::vector<int> symbols, std::vector<int> frequencies);
 
-std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, std::vector<char> symbols);
+std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, std::vector<int> symbols);
 
-EncodedData encodeString(std::string input, std::vector<EncodeCol> encodingTable);
-std::string decodeString(EncodedData *data, std::vector<DecodeCol> decodeTable, int numChars);
+EncodedData encodeData(std::vector<int> input, std::vector<EncodeCol> encodingTable);
+std::vector<int> decodeData(EncodedData *data, std::vector<DecodeCol> decodeTable, int numChars);
 
-std::vector<char> findSymbols(std::string input);
-std::vector<int> countSymbols(std::string input, std::vector<char> symbols);
+std::vector<int> findSymbols(std::vector<int> input);
+std::vector<int> countSymbols(std::vector<int> input, std::vector<int> symbols);
 std::vector<int> normalizeCounts(std::vector<int> counts, int tableSize);
+void sortCount(std::vector<int> *counts, std::vector<int> *symbols);
 
-void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<char> symbols);
+void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<int> symbols);
 void printDecodeTable(std::vector<DecodeCol> decodeTable);
+void printCounts(std::vector<int> count);
+void printSymbols(std::vector<int> symbols);
+
+std::vector<int> readFileAsNibbles(std::string filePath);
+bool areVectorsEqual(std::vector<int> input, std::vector<int> output);

@@ -1,6 +1,6 @@
 #include "tANS.h"
 
-std::vector<DecodeCol> createDecodingTable(std::vector<char> symbols, std::vector<int> frequencies)
+std::vector<DecodeCol> createDecodingTable(std::vector<int> symbols, std::vector<int> frequencies)
 {
     std::vector<DecodeCol> decodeTable;
 
@@ -26,7 +26,7 @@ std::vector<DecodeCol> createDecodingTable(std::vector<char> symbols, std::vecto
         //  Calculate the k-value, where k is how many times y needs to be doubled
         //  to be larger or equal to the total frequency count
         int k = 0;
-        int yDoubledk = currCol.y << k;
+        int yDoubledk = currCol.y;
         while (yDoubledk < totalFreq)
         {
             k++;
@@ -53,7 +53,7 @@ std::vector<DecodeCol> createDecodingTable(std::vector<char> symbols, std::vecto
     return decodeTable;
 }
 
-std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, std::vector<char> symbols)
+std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, std::vector<int> symbols)
 {
     std::vector<EncodeCol> encodeTable;
     encodeTable.resize(decodeTable.size());
@@ -64,7 +64,7 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
     std::vector<EncodeHelper> encodeHelpers;
 
     //  Build the encoding helper tables, one per symbol
-    for (char symbol : symbols)
+    for (int symbol : symbols)
     {
         EncodeHelper newHelper;
         newHelper.symbol = symbol;
@@ -73,7 +73,7 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
 
     for (DecodeCol dCol : decodeTable)
     {
-        char currSymbol = dCol.symbol;
+        int currSymbol = dCol.symbol;
         int symbolIndex = 0;
         while (encodeHelpers[symbolIndex].symbol != currSymbol)
             symbolIndex++;
@@ -120,21 +120,22 @@ std::vector<EncodeCol> createEncodingTable(std::vector<DecodeCol> decodeTable, s
     return encodeTable;
 }
 
-EncodedData encodeString(std::string input, std::vector<EncodeCol> encodingTable)
+EncodedData encodeData(std::vector<int> input, std::vector<EncodeCol> encodingTable)
 {
     EncodedData data;
     int state;
     //  Reverse the input, since ANS operates in FILO mode
-    std::string reverseString = "";
+    //std::vector<int> reverseInput = input;
+    std::vector<int> reverseInput(input.size());
     for (int i = 0; i < input.size(); i++)
     {
-        reverseString = input[i] + reverseString;
+        reverseInput[input.size() - 1 - i] = input[i];
     }
     //  Encode the string
     int currentOffsetState = 0;
-    for (int i = 0; i < reverseString.size(); i++)
+    for (int i = 0; i < reverseInput.size(); i++)
     {
-        char currChar = reverseString[i];
+        int currChar = reverseInput[i];
         //  Find correct encoding instruction for the symbol
         for (EncodeSymbolData eSymbols : encodingTable[currentOffsetState].symbols)
         {
@@ -161,13 +162,13 @@ EncodedData encodeString(std::string input, std::vector<EncodeCol> encodingTable
     return data;
 }
 
-std::string decodeString(EncodedData *data, std::vector<DecodeCol> decodeTable, int numChars)
+std::vector<int> decodeData(EncodedData *data, std::vector<DecodeCol> decodeTable, int numChars)
 {
     unsigned int tableSize = decodeTable.size();
     unsigned int state = data->initialState;
-    std::string decodedString = "";
-    decodedString += decodeTable[state-tableSize].symbol;
-    for (int i = 0; i < numChars-1; i++)
+    std::vector<int> returnVec(numChars);
+    returnVec[0] = decodeTable[state-tableSize].symbol;
+    for (int i = 1; i < numChars; i++)
     {
         unsigned int currY = decodeTable[state-tableSize].y;
         unsigned int currK = decodeTable[state-tableSize].k;
@@ -186,18 +187,18 @@ std::string decodeString(EncodedData *data, std::vector<DecodeCol> decodeTable, 
         }
         //  Calculate the next state and retrieve the symbol for that state
         state = (currY << currK) + streamValue;
-        decodedString += decodeTable[state-tableSize].symbol;
+        returnVec[i] = decodeTable[state-tableSize].symbol;
     }
-    return decodedString;
+    return returnVec;
 }
 
-std::vector<char> findSymbols(std::string input)
+std::vector<int> findSymbols(std::vector<int> input)
 {
-    std::vector<char> symbols;
+    std::vector<int> symbols;
     for (int i = 0; i < input.size(); i++)
     {
         bool foundSym = false;
-        for (char symbol : symbols)
+        for (int symbol : symbols)
         {
             if (symbol == input[i])
             {
@@ -211,12 +212,12 @@ std::vector<char> findSymbols(std::string input)
     return symbols;
 }
 
-std::vector<int> countSymbols(std::string input, std::vector<char> symbols)
+std::vector<int> countSymbols(std::vector<int> input, std::vector<int> symbols)
 {
     std::vector<int> symbolCounts(symbols.size());
     for (int i = 0; i < input.size(); i++)
     {
-        char currChar = input[i];
+        int currChar = input[i];
         for (int j = 0; j < symbols.size(); j++)
         {
             if (currChar == symbols[j])
@@ -280,15 +281,16 @@ std::vector<int> normalizeCounts(std::vector<int> counts, int tableSize)
             }
             normCounts[smallestIndex] = newCount;
             tableSize -= newCount;
+            totalCount -= smallestCount;
             counts[smallestIndex] = 0;
         }
     }
     return normCounts;
 }
 
-void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<char> symbols)
+void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<int> symbols)
 {
-    printf("x: ");
+    printf("   x: ");
     for (int i = 0; i < encodeTable.size(); i++)
     {
         printf("%2zu ", i+encodeTable.size());
@@ -296,19 +298,19 @@ void printEncodeTable(std::vector<EncodeCol> encodeTable, std::vector<char> symb
     printf("\n");
     for (int i = 0; i < symbols.size(); i++)
     {
-        printf("s: ");
+        printf("%2i s: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
             printf("%2i ", encodeTable[k].symbols[i].nextState);
         }
         printf("\n");
-        printf("b: ");
+        printf("%2i b: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
             printf("%2i ", encodeTable[k].symbols[i].streamValue);
         }
         printf("\n");
-        printf("k: ");
+        printf("%2i k: ", symbols[i]);
         for (int k = 0; k < encodeTable.size(); k++)
         {
             printf("%2i ", encodeTable[k].symbols[i].numBits);
@@ -323,4 +325,69 @@ void printDecodeTable(std::vector<DecodeCol> decodeTable)
     {
         std::cout << "State: " << currCol.state << " ->Symbol: " << currCol.symbol << " ->y, k " << currCol.y << "," << currCol.k << "\n";
     }
+}
+
+std::vector<int> readFileAsNibbles(std::string filePath)
+{
+    std::vector<int> returnVec;
+    FILE *file = fopen(filePath.c_str(), "rb");
+    fseek(file, 1, SEEK_END);
+    int fileEnd = ftell(file)-1;
+    rewind(file);
+    unsigned char byteArray[fileEnd];
+    fread(byteArray, 1, fileEnd, file);
+    fclose(file);
+    for (unsigned char byte : byteArray)
+    {
+        returnVec.push_back(byte >> 4);
+        returnVec.push_back(byte & 0b00001111);
+    }
+    return returnVec;
+}
+
+void printCounts(std::vector<int> counts)
+{
+    for (int count : counts)
+        printf("%4i ", count);
+    printf("\n");
+}
+
+void printSymbols(std::vector<int> symbols)
+{
+    for (int symbol : symbols)
+        printf("%4i ", symbol);
+    printf("\n");
+}
+
+void sortCount(std::vector<int> *counts, std::vector<int> *symbols)
+{
+    for (int i = 0; i < counts->size(); i++)
+    {
+        int currCount = (*counts)[i];
+        int currChar = (*symbols)[i];
+        for (int j = i; j < counts->size(); j++)
+        {
+            if ((*counts)[j] > currCount)
+            {
+                (*counts)[i] = (*counts)[j];
+                (*symbols)[i] = (*symbols)[j];
+                (*counts)[j] = currCount;
+                (*symbols)[j] = currChar;
+                currCount = (*counts)[i];
+                currChar = (*symbols)[i];
+            }
+        }
+    }
+}
+
+bool areVectorsEqual(std::vector<int> input, std::vector<int> output)
+{
+    if (input.size() != output.size())
+        return false;
+    for (int i = 0; i < input.size(); i++)
+    {
+        if (input[i] != output[i])
+            return false;
+    }
+    return true;
 }
